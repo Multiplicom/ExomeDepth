@@ -15,7 +15,7 @@ get_bed_frame <- function(bed_file, BIN_LENGTH_THRESHOLD = 50) {
 # Function which creates the target counts dataframe
 get_target_counts <- function(bam_dir, reference_fasta, bed_file){
   bed_frame = get_bed_frame(bed_file)
-  bam_files = list.files(path=bam_dir, pattern="*.bam$", full.names=TRUE, recursive=False)
+  bam_files = list.files(path=bam_dir, pattern="*.bam$", full.names=TRUE, recursive=FALSE)
   my_counts = exomedepth.getBamCounts(bed.frame=bed_frame, bam.files=bam_files, referenceFasta=reference_fasta)
   return(my_counts)
 }
