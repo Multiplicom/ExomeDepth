@@ -17,7 +17,20 @@ get_target_counts <- function(bam_dir, reference_fasta, bed_file){
   bed_frame = get_bed_frame(bed_file)
   bam_files = list.files(path=bam_dir, pattern="*.bam$", full.names=TRUE, recursive=FALSE)
   my_counts = ExomeDepth::getBamCounts(bed.frame=bed_frame, bam.files=bam_files, referenceFasta=reference_fasta)
+  my_counts$names = paste(my_counts$chromosome, paste(my_counts$start, my_counts$end, sep = "-"), sep = ":")
   return(my_counts)
+}
+
+# Function to convert the target counts into text delimited files
+get_coverage_files <- function(my_counts, file_dir){
+  fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
+  coverage_columns <- names(my_counts)[!names(my_counts) %in% fixed_columns]
+  for (cov_col in coverage_columns){
+    sample_df <- my.counts[,c(fixed_columns, cov_col)]
+    file_name <- paste(strsplit(cov_col, "\\.")[[1]][1], '.txt', sep = "")
+    out_file <- file.path(file_dir, file_name)
+    write.table(sample_df, out_file, quote=FALSE, sep='\t', row.names = FALSE)
+  }
 }
 
 
