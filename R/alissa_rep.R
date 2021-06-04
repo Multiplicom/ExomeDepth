@@ -32,6 +32,8 @@ get_coverage_files <- function(my_counts, file_dir){
     out_file <- file.path(file_dir, file_name)
     write.table(sample_df, out_file, quote=FALSE, sep='\t', row.names = FALSE)
   }
+  my_counts_file <- write.table(my_counts, file_path(file_dir, 'my_counts.txt', sep = "", , quote=FALSE, sep='\t', row.names = FALSE))
+  return(my_counts_file)
 }
 
 # Function to select the reference samples for the target sample
