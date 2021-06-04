@@ -34,4 +34,18 @@ get_coverage_files <- function(my_counts, file_dir){
   }
 }
 
+# Function to select the reference samples for the target sample
+select_ref_samples <- function(my_counts, target_sample, ref_samples){
+  fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
+  my.ref.samples <- names(my_counts)[names(my_counts) %in% ref_samples]
+  my.test <- my_counts[,target_sample]
+  my.reference.set <- as.matrix(my_counts[, my.ref.samples]) 
+  my.choice <- select.reference.set(test.counts = my.test,
+                                    reference.counts = my.reference.set,
+                                    bin.length = (my_counts$end - my_counts$start)/10, 
+                                    n.bins.reduced = 10000)
+  return(my.choice)
+}
+
+
 
