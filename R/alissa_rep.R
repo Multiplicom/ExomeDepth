@@ -1,4 +1,5 @@
 # Collection of helper functions to run ExomeDepth in Alissa Reporter
+# TODO: use roxygen to document each function
 
 # Create a dataframe from the Agilent Regions or Covered bed-file
 get_bed_frame <- function(bed_file, BIN_LENGTH_THRESHOLD = 50) {
@@ -26,7 +27,7 @@ get_coverage_files <- function(my_counts, file_dir){
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
   coverage_columns <- names(my_counts)[!names(my_counts) %in% fixed_columns]
   for (cov_col in coverage_columns){
-    sample_df <- my.counts[,c(fixed_columns, cov_col)]
+    sample_df <- my_counts[,c(fixed_columns, cov_col)]
     file_name <- paste(strsplit(cov_col, "\\.")[[1]][1], '_cov.txt', sep = "")
     out_file <- file.path(file_dir, file_name)
     write.table(sample_df, out_file, quote=FALSE, sep='\t', row.names = FALSE)
