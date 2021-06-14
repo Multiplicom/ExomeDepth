@@ -44,7 +44,8 @@ get_coverage_files <- function(my_counts, file_dir){
 }
 
 # Function to select the reference samples for the target sample
-select_ref_samples <- function(my_counts, target_sample, ref_samples){
+select_ref_samples <- function(my_counts_file, target_sample, ref_samples){
+  my_counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
   my.ref.samples <- names(my_counts)[names(my_counts) %in% ref_samples]
   my.test <- my_counts[,target_sample]
