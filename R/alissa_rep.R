@@ -62,11 +62,14 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
                                  FUN = sum)
   #TODO: also include here possibility to perform gc-bias correction
   if (bias_correction){
+    cat("GC content incorporated into the model")
+    data <- data.frame(GC = my_counts$GC)
     model <- 'cbind(test, reference) ~ GC'
   }else{
     model <- 'cbind(test, reference) ~ 1'
+    data <- NULL
   }
-  all.exons <- new('ExomeDepth', test = my.test,
+  all.exons <- new('ExomeDepth', data = data, test = my.test,
                    reference = my.reference.selected, 
                    formula = model)
   all.exons <- CallCNVs(x = all.exons, transition.probability = 10^-4,
@@ -79,7 +82,7 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   write.table(all.exons@CNV.calls, cnv_calls_file, 
               quote=FALSE, sep='\t', row.names = FALSE)
   # TODO: also store the calculated dq-values
-  return(all.exons)
+  return(cnv_calls_file)
 }
 
 
