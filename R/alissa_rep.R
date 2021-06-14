@@ -44,7 +44,7 @@ get_coverage_files <- function(my_counts, file_dir){
 }
 
 # Function to select the reference samples for the target sample
-select_ref_samples <- function(my_counts_file, target_sample, ref_samples){
+perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples){
   my_counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
   my.ref.samples <- names(my_counts)[names(my_counts) %in% ref_samples]
@@ -54,7 +54,21 @@ select_ref_samples <- function(my_counts_file, target_sample, ref_samples){
                                     reference.counts = my.reference.set,
                                     bin.length = (my_counts$end - my_counts$start)/10, 
                                     n.bins.reduced = 10000)
-  return(my.choice)
+  # TODO: write choice dataframe to file and store this as fileobj
+  my.matrix <- as.matrix( my_counts[, my.choice$reference.choice, drop = FALSE]) # includes all selected samples
+  my.reference.selected <- apply(X = my.matrix,
+                                 MAR = 1,
+                                 FUN = sum)
+  #TODO: also include here possibility to perform gc-bias correction
+  all.exons <- new('ExomeDepth', test = my.test,
+                   reference = my.reference.selected, 
+                   formula = 'cbind(test, reference) ~ 1')
+  all.exons <- CallCNVs(x = all.exons, transition.probability = 10^-4,
+                        chromosome = my_counts$chromosome, start = my_counts$start,
+                        end = my_counts$end,
+                        name = my_counts$names)
+  return(all.exons)
+  
 }
 
 
