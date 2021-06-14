@@ -22,6 +22,11 @@ get_target_counts <- function(bam_dir, reference_fasta, bed_file){
   return(my_counts)
 }
 
+# Function which converts the target counts dataframe into a separate file
+#dataframe_to_file <- function(input_df, file_name){
+#  write.table(input_df,input_df,sep="\t",row.names=FALSE)
+#}
+
 # Function to convert the target counts into text delimited files
 get_coverage_files <- function(my_counts, file_dir){
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
@@ -32,7 +37,9 @@ get_coverage_files <- function(my_counts, file_dir){
     out_file <- file.path(file_dir, file_name)
     write.table(sample_df, out_file, quote=FALSE, sep='\t', row.names = FALSE)
   }
-  my_counts_file <- write.table(my_counts, file_path(file_dir, 'my_counts.txt', sep = "", , quote=FALSE, sep='\t', row.names = FALSE))
+  my_counts_file <- file_path(file_dir, 'my_counts.txt', sep = "")
+  write.table(my_counts, my_counts_file, 
+                                quote=FALSE, sep='\t', row.names = FALSE)
   return(my_counts_file)
 }
 
