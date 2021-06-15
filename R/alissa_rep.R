@@ -30,7 +30,7 @@ get_target_counts <- function(bam_dir, reference_fasta, bed_file){
 # Function to convert the target counts into text delimited files
 get_coverage_files <- function(my_counts, file_dir){
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
-  coverage_columns <- names(my_counts)[!names(my_counts) %in% fixed_columns]
+  coverage_columns <- get_coverage_columns(fixed_columns, my.counts)
   for (cov_col in coverage_columns){
     sample_df <- my_counts[,c(fixed_columns, cov_col)]
     file_name <- paste(strsplit(cov_col, "\\.")[[1]][1], '_cov.txt', sep = "")
@@ -95,5 +95,31 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   return(list(cnv_calls_file, dq_file))
 }
 
+add_poisson_noise <- function(my_counts_file, lambda_vec){
+  # Add poisson noise to the counts matrix
+  my_counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
+  fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
+  coverage_columns <- get_coverage_columns(fixed_columns, my.counts)
+  my.counts.matrix <- my.counts[,coverage_columns]
+  lambda = c(10, 10, 50, 10, 10) # add different amounts of poisson noise to the samples
+  n_els = nrow(my.counts.matrix)
+  if (length(lambda) == n_els){
+    #Check whether the lambda vector has the same length as the number of coverage columns in the file
+    my.counts.noise = matrix(, nrow = n_els, ncol = length(file_names), dimnames = list(c(NULL), as.vector(file_names)))
+    for (i in 1:length(file_names)){
+      my.counts.noise[,i] = my.counts.matrix[,i] +  rpois(n_els, lambda[i])
+    }
+    my.counts <- cbind(my.counts[,c("chromosome", "start", "end", "GC")],as.data.frame(my.counts.noise))
+    rm(list = c("my.counts.matrix", "my.counts.noise"))
+    #todo: overwrite the existing coverage files or rename them?
+    return(my.counts)
+  }else{
+    stop("The lambda vector should have the same length as the number of samples")
+  }
+}
 
+get_coverage_columns <- function(fixed_columns, counts_df){
+  coverage_columns <- names(my_counts)[!names(my_counts) %in% fixed_columns]
+  return(coverage_columns)
+}
 
