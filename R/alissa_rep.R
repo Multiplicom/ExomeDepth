@@ -72,7 +72,7 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   all.exons <- new('ExomeDepth', data = data, test = my.test,
                    reference = my.reference.selected, 
                    formula = model)
-  all.exons <- CallCNVs(x = all.exons, transition.probability = 10^-4,
+  all.exons <- CallCNVs(x = all.exons, transition.probability = transition.probability,
                         chromosome = my_counts$chromosome, start = my_counts$start,
                         end = my_counts$end,
                         name = my_counts$names)
@@ -90,7 +90,7 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   dq_df$ratio_observed <- all.exons@test/ (all.exons@reference + all.exons@test)
   dq_df$ratio_expected <- all.exons@expected
   dq_df$dq <-  dq_df$ratio_observed/ all.exons@expected
-  write.table(dq, dq_file, 
+  write.table(dq_df, dq_file, 
               quote=FALSE, sep='\t', row.names = FALSE)
   return(list(cnv_calls_file, dq_file))
 }
