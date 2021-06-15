@@ -97,7 +97,7 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
 
 add_poisson_noise <- function(my_counts_file, lambda_vec){
   # Add poisson noise to the counts matrix
-  my_counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
+  my.counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
   coverage_columns <- get_coverage_columns(fixed_columns, my.counts)
   my.counts.matrix <- my.counts[,coverage_columns]
@@ -111,11 +111,26 @@ add_poisson_noise <- function(my_counts_file, lambda_vec){
     }
     my.counts <- cbind(my.counts[,c("chromosome", "start", "end", "GC")],as.data.frame(my.counts.noise))
     rm(list = c("my.counts.matrix", "my.counts.noise"))
-    #todo: overwrite the existing coverage files or rename them?
+    #TODO: overwrite the existing coverage files or rename them?
     return(my.counts)
   }else{
     stop("The lambda vector should have the same length as the number of samples")
   }
+}
+
+add_cnv <- function(my_counts_file, cnv_coordinates, sample, copy_num){
+  my.counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
+  if(!cnv_coordinates %in% my.counts$names){
+    # TODO: change this so that automatically the bins are chosen which should contain the cnv
+    stop("Given cnv coordinates are not present in the counts file")
+  }
+  if(!sample %in% names(sample)){
+    stop("Given sample is not present in the counts file")
+  }
+  normal_cov = my.counts[my.counts$names == cnv_coordinates, sample]
+  my.counts[my.counts$names == cnv_coordinates, sample] = normal_cov*copy_num/2
+  #TODO: overwrite the existing coverage files or rename them?
+  return(my.counts)
 }
 
 get_coverage_columns <- function(fixed_columns, counts_df){
