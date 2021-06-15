@@ -44,7 +44,7 @@ get_coverage_files <- function(my_counts, file_dir){
 }
 
 # Function to select the reference samples for the target sample
-perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file_dir, bias_correction = TRUE){
+perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file_dir, bias_correction = TRUE, transition.probability = 10^-4){
   my_counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
   my.ref.samples <- names(my_counts)[names(my_counts) %in% ref_samples]
@@ -60,7 +60,7 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   my.reference.selected <- apply(X = my.matrix,
                                  MAR = 1,
                                  FUN = sum)
-  #TODO: also include here possibility to perform gc-bias correction
+  #Perform gc-bias correction, if needed
   if (bias_correction){
     cat("GC content incorporated into the model")
     data <- data.frame(GC = my_counts$GC)
@@ -81,8 +81,18 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   cnv_calls_file <- file.path(file_dir, file_name)
   write.table(all.exons@CNV.calls, cnv_calls_file, 
               quote=FALSE, sep='\t', row.names = FALSE)
-  # TODO: also store the calculated dq-values
-  return(cnv_calls_file)
+  # Write calculated dq-values to a file
+  file_name <- paste(strsplit(target_sample, "\\.")[[1]][1], '_dq.txt', sep = "")
+  dq_file <- file.path(file_dir, file_name)
+  dq_df <- all.exons@annotations
+  dq_df$test <- all.exons@test
+  dq_df$reference <- all.exons@reference
+  dq_df$ratio_observed <- all.exons@test/ (all.exons@reference + all.exons@test)
+  dq_df$ratio_expected <- all.exons@expected
+  dq_df$dq <-  dq_df$ratio_observed/ all.exons@expected
+  write.table(dq, dq_file, 
+              quote=FALSE, sep='\t', row.names = FALSE)
+  return(list(cnv_calls_file, dq_file))
 }
 
 
