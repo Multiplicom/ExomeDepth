@@ -134,7 +134,7 @@ add_cnv <- function(my_counts_file, cnv_coordinates, sample, copy_num){
 }
 
 get_coverage_columns <- function(fixed_columns, counts_df){
-  coverage_columns <- names(my_counts)[!names(my_counts) %in% fixed_columns]
+  coverage_columns <- names(counts_df)[!names(counts_df) %in% fixed_columns]
   return(coverage_columns)
 }
 
