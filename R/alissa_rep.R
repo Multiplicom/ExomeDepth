@@ -30,7 +30,7 @@ get_target_counts <- function(bam_dir, reference_fasta, bed_file){
 # Function to convert the target counts into text delimited files
 get_coverage_files <- function(my_counts, file_dir){
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
-  coverage_columns <- get_coverage_columns(fixed_columns, my.counts)
+  coverage_columns <- get_coverage_columns(fixed_columns, my_counts)
   for (cov_col in coverage_columns){
     sample_df <- my_counts[,c(fixed_columns, cov_col)]
     file_name <- paste(strsplit(cov_col, "\\.")[[1]][1], '_cov.txt', sep = "")
