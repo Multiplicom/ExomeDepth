@@ -1,0 +1,102 @@
+suppressPackageStartupMessages(library("optparse"))
+
+option_list = list(
+  make_option(c("-c", "--counts"), type="character", default=NULL, 
+              help="path to file with target counts", metavar="character"),
+  make_option(c("-s", "--sample"), type="character", default=NULL, 
+              help="name of the target sample name for cnv calling", metavar="character"),
+  make_option(c("-r", "--ref"), type="character", default=NULL,
+              help="comma-separated list of reference samples", metavar="character"),
+  make_option(c("-o", "--out"), type="character", default=NULL,
+              help="directory containing the output files", metavar="character"),
+  make_option(c("-b", "--bias"), type="boolean", default=TRUE,
+              help="perform GC-bias correction [default= %default]", metavar="boolean"),
+  make_option(c("-p", "--prob"), type="double", default=10^-4,
+              help="transition probability used for cnv calling [default= %default]", metavar="double")  
+); 
+
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
+
+if (is.null(opt$counts)){
+  print_help(opt_parser)
+  stop("Argument with counts file should be provided. \n", call.=FALSE)
+}
+
+if (is.null(opt$sample)){
+  print_help(opt_parser)
+  stop("Argument with target sample name should be provided. \n", call.=FALSE)
+}
+
+if (is.null(opt$ref)){
+  print_help(opt_parser)
+  stop("Argument with list of reference sample names should be provided. \n", call.=FALSE)
+}
+
+if (is.null(opt$out)){
+  print_help(opt_parser)
+  stop("Argument with output directory should be provided. \n", call.=FALSE)
+}
+
+# Function to select the reference samples for the target sample
+perform_cnv_calling <- function(my_counts_file=opt$counts, target_sample=opt$sample, 
+                                ref_samples=opt$ref, file_dir=opt$out, 
+                                bias_correction=opt$bias, transition.probability=opt$prob){
+  my_counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
+  fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
+  my.ref.samples <- names(my_counts)[names(my_counts) %in% ref_samples]
+  my.test <- my_counts[,target_sample]
+  my.reference.set <- as.matrix(my_counts[, my.ref.samples]) 
+  my.choice <- select.reference.set(test.counts = my.test,
+                                    reference.counts = my.reference.set,
+                                    bin.length = (my_counts$end - my_counts$start)/10, 
+                                    n.bins.reduced = 10000)
+  cat("Selected reference samples: ", paste(my.choice$reference.choice, collapse = ", "), sep = "")
+  # TODO: write choice dataframe to file and store this as fileobj?
+  my.matrix <- as.matrix( my_counts[, my.choice$reference.choice, drop = FALSE]) # includes all selected samples
+  my.reference.selected <- apply(X = my.matrix,
+                                 MAR = 1,
+                                 FUN = sum)
+  #Perform gc-bias correction, if needed
+  if (bias_correction){
+    cat("GC content incorporated into the model")
+    data <- data.frame(GC = my_counts$GC)
+    model <- 'cbind(test, reference) ~ GC'
+  }else{
+    model <- 'cbind(test, reference) ~ 1'
+    data <- NULL
+  }
+  all.exons <- new('ExomeDepth', data = data, test = my.test,
+                   reference = my.reference.selected, 
+                   formula = model)
+  all.exons <- CallCNVs(x = all.exons, transition.probability = transition.probability,
+                        chromosome = my_counts$chromosome, start = my_counts$start,
+                        end = my_counts$end,
+                        name = my_counts$names)
+  # Write CNV calls to file
+  file_name <- paste(strsplit(target_sample, "\\.")[[1]][1], '_cnv.txt', sep = "")
+  cnv_calls_file <- file.path(file_dir, file_name)
+  write.table(all.exons@CNV.calls, cnv_calls_file, 
+              quote=FALSE, sep='\t', row.names = FALSE)
+  # Write calculated dq-values to a file
+  file_name <- paste(strsplit(target_sample, "\\.")[[1]][1], '_dq.txt', sep = "")
+  dq_file <- file.path(file_dir, file_name)
+  dq_df <- all.exons@annotations
+  dq_df$test <- all.exons@test
+  dq_df$reference <- all.exons@reference
+  dq_df$ratio_observed <- all.exons@test/ (all.exons@reference + all.exons@test)
+  dq_df$ratio_expected <- all.exons@expected
+  dq_df$dq <-  dq_df$ratio_observed/ all.exons@expected
+  write.table(dq_df, dq_file, 
+              quote=FALSE, sep='\t', row.names = FALSE)
+  return(list(cnv_calls_file, dq_file))
+}
+
+
+
+
+
+
+
+
+
