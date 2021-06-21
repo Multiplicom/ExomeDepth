@@ -1,4 +1,7 @@
 suppressPackageStartupMessages(library("optparse"))
+#suppressPackageStartupMessages(library("devtools"))
+#devtools::install_github("Multiplicom/ExomeDepth", force = TRUE)
+#suppressPackageStartupMessages(library("ExomeDepth"))
 
 option_list = list(
   make_option(c("-c", "--counts"), type="character", default=NULL, 
@@ -9,9 +12,9 @@ option_list = list(
               help="comma-separated list of reference samples", metavar="character"),
   make_option(c("-o", "--out"), type="character", default=NULL,
               help="directory containing the output files", metavar="character"),
-  make_option(c("-b", "--bias"), type="boolean", default=TRUE,
-              help="perform GC-bias correction [default= %default]", metavar="boolean"),
-  make_option(c("-p", "--prob"), type="double", default=10^-4,
+  make_option(c("-b", "--bias"), type="logical", default=TRUE,
+              help="perform GC-bias correction [default= %default]", metavar="logical"),
+  make_option(c("-p", "--prob"), type="double", default=1e-4,
               help="transition probability used for cnv calling [default= %default]", metavar="double")  
 ); 
 
@@ -39,19 +42,18 @@ if (is.null(opt$out)){
 }
 
 # Function to select the reference samples for the target sample
-perform_cnv_calling <- function(my_counts_file=opt$counts, target_sample=opt$sample, 
-                                ref_samples=opt$ref, file_dir=opt$out, 
-                                bias_correction=opt$bias, transition.probability=opt$prob){
+perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file_dir, bias_correction = TRUE, transition.probability = 10^-4){
   my_counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
-  my.ref.samples <- names(my_counts)[names(my_counts) %in% ref_samples]
+  ref_samples_list <- strsplit(ref_samples, split = ",")[[1]]
+  my.ref.samples <- names(my_counts)[names(my_counts) %in% ref_samples_list]
   my.test <- my_counts[,target_sample]
   my.reference.set <- as.matrix(my_counts[, my.ref.samples]) 
-  my.choice <- select.reference.set(test.counts = my.test,
+  my.choice <- ExomeDepth::select.reference.set(test.counts = my.test,
                                     reference.counts = my.reference.set,
                                     bin.length = (my_counts$end - my_counts$start)/10, 
                                     n.bins.reduced = 10000)
-  cat("Selected reference samples: ", paste(my.choice$reference.choice, collapse = ", "), sep = "")
+  cat("Selected reference samples: ", paste(my.choice$reference.choice, collapse = ", "), "\n", sep = "")
   # TODO: write choice dataframe to file and store this as fileobj?
   my.matrix <- as.matrix( my_counts[, my.choice$reference.choice, drop = FALSE]) # includes all selected samples
   my.reference.selected <- apply(X = my.matrix,
@@ -59,7 +61,7 @@ perform_cnv_calling <- function(my_counts_file=opt$counts, target_sample=opt$sam
                                  FUN = sum)
   #Perform gc-bias correction, if needed
   if (bias_correction){
-    cat("GC content incorporated into the model")
+    cat("GC content incorporated into the model \n")
     data <- data.frame(GC = my_counts$GC)
     model <- 'cbind(test, reference) ~ GC'
   }else{
@@ -69,7 +71,7 @@ perform_cnv_calling <- function(my_counts_file=opt$counts, target_sample=opt$sam
   all.exons <- new('ExomeDepth', data = data, test = my.test,
                    reference = my.reference.selected, 
                    formula = model)
-  all.exons <- CallCNVs(x = all.exons, transition.probability = transition.probability,
+  all.exons <- ExomeDepth::CallCNVs(x = all.exons, transition.probability = transition.probability,
                         chromosome = my_counts$chromosome, start = my_counts$start,
                         end = my_counts$end,
                         name = my_counts$names)
@@ -92,7 +94,9 @@ perform_cnv_calling <- function(my_counts_file=opt$counts, target_sample=opt$sam
   return(list(cnv_calls_file, dq_file))
 }
 
-
+perform_cnv_calling(my_counts_file=opt$counts, target_sample=opt$sample, 
+                                ref_samples=opt$ref, file_dir=opt$out, 
+                                bias_correction=opt$bias, transition.probability=opt$prob)
 
 
 

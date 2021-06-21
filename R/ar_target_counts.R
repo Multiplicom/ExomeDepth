@@ -1,4 +1,8 @@
 suppressPackageStartupMessages(library("optparse"))
+#suppressPackageStartupMessages(library("devtools"))
+#devtools::install_github("Multiplicom/ExomeDepth", force = TRUE)
+#suppressPackageStartupMessages(library("ExomeDepth"))
+
 
 option_list = list(
   make_option(c("-b", "--bam"), type="character", default=NULL, 
@@ -49,7 +53,7 @@ get_bed_frame <- function(bed_file, BIN_LENGTH_THRESHOLD = 50) {
 }
 
 # Function which creates the target counts dataframe
-get_target_counts <- function(bam_dir, reference_fasta, bed_file, min_mapq=opt$mapq){
+get_target_counts <- function(bam_dir, reference_fasta, bed_file, min_mapq=20){
   bed_frame = get_bed_frame(bed_file)
   bam_files = list.files(path=bam_dir, pattern="*.bam$", full.names=TRUE, recursive=FALSE)
   my_counts = ExomeDepth::getBamCounts(bed.frame=bed_frame, bam.files=bam_files, referenceFasta=reference_fasta, min.mapq = min_mapq)
@@ -81,5 +85,5 @@ get_coverage_columns <- function(fixed_columns, counts_df){
   return(coverage_columns)
 }
 
-my_counts <- get_target_counts(opt$bam, opt$fasta, opt$bed)
-my_counts_file <- get_coverage_files(my_counts, opt$out)
+my_counts <- get_target_counts(bam_dir=opt$bam, reference_fasta=opt$fasta, bed_file=opt$bed, min_mapq=opt$mapq)
+my_counts_file <- get_coverage_files(my_counts, file_dir=opt$out)
