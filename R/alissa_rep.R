@@ -1,5 +1,6 @@
 # Collection of helper functions to run ExomeDepth in Alissa Reporter
 # TODO: use roxygen to document each function
+library('dplyr')
 
 # Create a dataframe from the Agilent Regions or Covered bed-file
 get_bed_frame <- function(bed_file, BIN_LENGTH_THRESHOLD = 50) {
@@ -101,9 +102,9 @@ add_poisson_noise <- function(my_counts_file, lambda_vec){
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
   coverage_columns <- get_coverage_columns(fixed_columns, my.counts)
   my.counts.matrix <- my.counts[,coverage_columns]
-  lambda = c(10, 10, 50, 10, 10) # add different amounts of poisson noise to the samples
+  #lambda = c(10, 10, 50, 10, 10) # add different amounts of poisson noise to the samples
   n_els = nrow(my.counts.matrix)
-  if (length(lambda) == n_els){
+  if (length(lambda_vec) == n_els){
     #Check whether the lambda vector has the same length as the number of coverage columns in the file
     my.counts.noise = matrix(, nrow = n_els, ncol = length(file_names), dimnames = list(c(NULL), as.vector(file_names)))
     for (i in 1:length(file_names)){
@@ -118,19 +119,35 @@ add_poisson_noise <- function(my_counts_file, lambda_vec){
   }
 }
 
-add_cnv <- function(my_counts_file, cnv_coordinates, sample, copy_num){
-  my.counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
-  if(!cnv_coordinates %in% my.counts$names){
-    # TODO: change this so that automatically the bins are chosen which should contain the cnv
-    stop("Given cnv coordinates are not present in the counts file")
+add_cnv <- function(my_counts_file_in, my_counts_file_out, cnv_file){
+  cnvs <- read.table(cnv_file, header = TRUE, sep = "\t", quote = "")
+  my.counts <- read.table(my_counts_file_in, header = TRUE, sep = "\t", quote = "")
+  #TODO: also that above! 
+  names(my.counts) <- gsub("\\.bam", "", names(my.counts)) # remove the .bam extension in the dataframe 
+  for (row in 1:nrow(cnvs)){
+    cnv.copy_num  <- cnvs[row, "copy_number"]
+    cnv_coordinates <- cnvs[row, "cnv_coordinates"]
+    cnv.chrom <- strsplit(cnv_coordindates, ":")[[1]][1]
+    cnv.start <- strsplit(strsplit(cnv_coordindates, ":")[[1]][2], "-")[[1]][1]
+    cnv.end <- strsplit(strsplit(cnv_coordindates, ":")[[1]][2], "-")[[1]][2]
+    cnv.sample <- cnvs[row, "sample"]
+    if(!sample %in% names(my.counts)){
+      stop("Given sample is not present in the counts file")
+    }
+    # Find the number of bins that fall within the cnv coordinates
+    num_cnvs <- nrow(filter(my.counts, chromosome == cnv.chrom, between(start, cnv.start, cnv.end), end <= cnv.end))
+    if(num_cnvs < 1){
+      stop("Given cnv coordinates are not present in the counts file")
+    }
+    my.counts %>% 
+      mutate(cnv.sample = case_when(chromosome == cnv.chrom & between(start, cnv.start, cnv.end) & end <= cnv.end ~ .*cnv.copy_num/2))
+    #normal_cov = my.counts[my.counts$names == cnv_coordinates, sample]
+    #my.counts[my.counts$names == cnv_coordinates, sample] = normal_cov*copy_num/2
   }
-  if(!sample %in% names(sample)){
-    stop("Given sample is not present in the counts file")
-  }
-  normal_cov = my.counts[my.counts$names == cnv_coordinates, sample]
-  my.counts[my.counts$names == cnv_coordinates, sample] = normal_cov*copy_num/2
-  #TODO: overwrite the existing coverage files or rename them?
-  return(my.counts)
+  #Overwrite the existing coverage files or rename them?
+  write.table(as.data.frame(my.counts), my_counts_file_out, 
+              quote=FALSE, sep='\t', row.names = FALSE)
+  return(my_counts_file_out)
 }
 
 get_coverage_columns <- function(fixed_columns, counts_df){
