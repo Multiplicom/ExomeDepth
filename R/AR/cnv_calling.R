@@ -41,7 +41,7 @@ if (is.null(opt$out)){
 
 # Function to select the reference samples for the target sample
 perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file_dir, bias_correction = TRUE, transition.probability = 10^-4){
-  my_counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
+  my_counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE)
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
   ref_samples_list <- strsplit(ref_samples, split = ",")[[1]]
   my.ref.samples <- names(my_counts)[names(my_counts) %in% ref_samples_list]

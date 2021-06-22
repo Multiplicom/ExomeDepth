@@ -56,6 +56,7 @@ get_target_counts <- function(bam_dir, reference_fasta, bed_file, min_mapq=20){
   bam_files = list.files(path=bam_dir, pattern="*.bam$", full.names=TRUE, recursive=FALSE)
   my_counts = ExomeDepth::getBamCounts(bed.frame=bed_frame, bam.files=bam_files, referenceFasta=reference_fasta, min.mapq = min_mapq)
   my_counts$names = paste(my_counts$chromosome, paste(my_counts$start, my_counts$end, sep = "-"), sep = ":")
+  names(my_counts) <- gsub("\\.bam", "", names(my_counts)) # remove the .bam extension in the dataframe 
   return(my_counts)
 }
 
@@ -65,7 +66,7 @@ get_coverage_files <- function(my_counts, file_dir){
   coverage_columns <- get_coverage_columns(fixed_columns, my_counts)
   for (cov_col in coverage_columns){
     sample_df <- my_counts[,c(fixed_columns, cov_col)]
-    file_name <- paste(strsplit(cov_col, "\\.")[[1]][1], '_cov.txt', sep = "")
+    file_name <- paste(strsplit(cov_col, "\\.")[[1]][1], '_cov.txt', sep = "") #removes .bam extension, but probably no longer needed as is been taken care of above
     out_file <- file.path(file_dir, file_name)
     cat("Write counts of ", cov_col, " to output file \n", sep = "")
     cat("Output file: ", out_file, "\n", sep = "")
