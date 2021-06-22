@@ -1,3 +1,5 @@
-#install.packages("devtools")
 install.packages("optparse")
 install.packages("dplyr")
+install.packages("devtools")
+suppressPackageStartupMessages(library("devtools"))
+devtools::install_github("Multiplicom/ExomeDepth", force = TRUE)

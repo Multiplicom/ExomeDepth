@@ -1,7 +1,5 @@
 suppressPackageStartupMessages(library("optparse"))
-#suppressPackageStartupMessages(library("devtools"))
-#devtools::install_github("Multiplicom/ExomeDepth", force = TRUE)
-#suppressPackageStartupMessages(library("ExomeDepth"))
+suppressPackageStartupMessages(library("ExomeDepth"))
 
 option_list = list(
   make_option(c("-c", "--counts"), type="character", default=NULL, 
