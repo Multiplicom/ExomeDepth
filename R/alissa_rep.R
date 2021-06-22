@@ -135,14 +135,12 @@ add_cnv <- function(my_counts_file_in, my_counts_file_out, cnv_file){
       stop("Given sample is not present in the counts file")
     }
     # Find the number of bins that fall within the cnv coordinates
-    num_cnvs <- nrow(filter(my.counts, chromosome == cnv.chrom, between(start, cnv.start, cnv.end), end <= cnv.end))
+    rowSelect <- my.counts$chromosome == cnv.chrom & my.counts$start >= cnv.start & my.counts$start <= cnv.end
+    num_cnvs <- length(which(rowSelect))
     if(num_cnvs < 1){
       stop("Given cnv coordinates are not present in the counts file")
     }
-    my.counts %>% 
-      mutate(cnv.sample = case_when(chromosome == cnv.chrom & between(start, cnv.start, cnv.end) & end <= cnv.end ~ .*cnv.copy_num/2))
-    #normal_cov = my.counts[my.counts$names == cnv_coordinates, sample]
-    #my.counts[my.counts$names == cnv_coordinates, sample] = normal_cov*copy_num/2
+    my.counts[rowSelect, cnv.sample] <- my.counts[rowSelect, cnv.sample]*cnv.copy_num/2
   }
   #Overwrite the existing coverage files or rename them?
   write.table(as.data.frame(my.counts), my_counts_file_out, 
