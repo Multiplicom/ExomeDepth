@@ -7,12 +7,23 @@ option_list = list(
   make_option(c("-o", "--ocounts"), type="character", default=NULL, 
               help="path to outputfile with target counts", metavar="character"),
   make_option(c("-c", "--cnv"), type="character", default=NULL,
-              help="file with cnvs to be added to the counts", metavar="character")
+              help="file with cnvs to be added to the counts", metavar="character"),
+  make_option(c("-n", "--noise"), type="character", default=NULL,
+              help="file with poisson noise to be added to the counts", metavar="character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
+if (is.null(opt$icounts)){
+  print_help(opt_parser)
+  stop("Argument with input counts file should be provided. \n", call.=FALSE)
+}
+
+if (is.null(opt$ocounts)){
+  print_help(opt_parser)
+  stop("Argument with output counts file should be provided. \n", call.=FALSE)
+}
 
 add_cnv <- function(my_counts_file_in, my_counts_file_out, cnv_file){
   cnvs <- read.table(cnv_file, header = TRUE, sep = "\t", quote = "", stringsAsFactors=FALSE)
@@ -25,10 +36,10 @@ add_cnv <- function(my_counts_file_in, my_counts_file_out, cnv_file){
     cnv.start <- strsplit(strsplit(cnv_coordinates, ":")[[1]][2], "-")[[1]][1]
     cnv.end <- strsplit(strsplit(cnv_coordinates, ":")[[1]][2], "-")[[1]][2]
     cnv.sample <- cnvs[row, "sample"]
-    cat("Add CNV with coordinates ", cnv_coordinates, " to sample ", cnv.sample, "\n", sep = "")
     if(!c(cnv.sample) %in% names(my.counts)){
       stop("Given sample is not present in the counts file")
     }
+    cat("Add CNV with coordinates ", cnv_coordinates, " to sample ", cnv.sample, "\n", sep = "")
     # Find the number of bins that fall within the cnv coordinates
     rowSelect <- my.counts$chromosome == cnv.chrom & my.counts$start >= cnv.start & my.counts$start <= cnv.end
     num_cnvs <- length(which(rowSelect))
@@ -43,27 +54,33 @@ add_cnv <- function(my_counts_file_in, my_counts_file_out, cnv_file){
   return(my_counts_file_out)
 }
 
-add_poisson_noise <- function(my_counts_file, lambda_vec){
+add_poisson_noise <- function(my_counts_file_in, my_counts_file_out, noise_file){
   # Add poisson noise to the counts matrix
-  my.counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "")
-  fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
-  coverage_columns <- get_coverage_columns(fixed_columns, my.counts)
-  my.counts.matrix <- my.counts[,coverage_columns]
-  #lambda = c(10, 10, 50, 10, 10) # add different amounts of poisson noise to the samples
-  n_els = nrow(my.counts.matrix)
-  if (length(lambda_vec) == n_els){
-    #Check whether the lambda vector has the same length as the number of coverage columns in the file
-    my.counts.noise = matrix(, nrow = n_els, ncol = length(file_names), dimnames = list(c(NULL), as.vector(file_names)))
-    for (i in 1:length(file_names)){
-      my.counts.noise[,i] = my.counts.matrix[,i] +  rpois(n_els, lambda[i])
+  # Get the counts
+  my.counts <- read.table(my_counts_file_in, header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE)
+  # Get the noise data
+  poisson_noise  <- read.table(noise_file, header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE)
+  n_els = nrow(my.counts)
+  for (row in 1:nrow(poisson_noise)){
+    nsample <- poisson_noise[row, "sample"]
+    noise <- poisson_noise[row, "noise"]
+    cat("Add Poission noise ", noise, " to sample ", nsample, "\n", sep = "")
+    if(!c(nsample) %in% names(my.counts)){
+      stop("Given sample is not present in the counts file")
     }
-    my.counts <- cbind(my.counts[,c("chromosome", "start", "end", "GC")],as.data.frame(my.counts.noise))
-    rm(list = c("my.counts.matrix", "my.counts.noise"))
-    #TODO: overwrite the existing coverage files or rename them?
-    return(my.counts)
-  }else{
-    stop("The lambda vector should have the same length as the number of samples")
+    my.counts[,nsample] <- my.counts[,nsample] + rpois(n_els, noise)
   }
+  # write the new counts matrix
+  write.table(as.data.frame(my.counts), my_counts_file_out, 
+              quote=FALSE, sep='\t', row.names = FALSE)
+  return(my_counts_file_out)
 }
 
-add_cnv(my_counts_file_in = opt$icounts, my_counts_file_out = opt$ocounts, cnv_file = opt$cnv)
+if (!is.null(opt$noise) & !is.null(opt$cnv)){
+  counts_file_out <- add_cnv(my_counts_file_in = opt$icounts, my_counts_file_out = opt$ocounts, cnv_file = opt$cnv)
+  counts_file_out <- add_poisson_noise(my_counts_file_in = counts_file_out, my_counts_file_out = opt$ocounts, noise_file = opt$noise)
+} else if (!is.null(opt$noise)){
+  counts_file_out <- add_poisson_noise(my_counts_file_in = opt$icounts, my_counts_file_out = opt$ocounts, noise_file = opt$noise)
+} else if (!is.null(opt$cnv)){
+  counts_file_out <- add_cnv(my_counts_file_in = opt$icounts, my_counts_file_out = opt$ocounts, cnv_file = opt$cnv)
+}
