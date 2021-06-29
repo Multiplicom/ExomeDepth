@@ -73,13 +73,7 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
                         chromosome = my_counts$chromosome, start = my_counts$start,
                         end = my_counts$end,
                         name = my_counts$names)
-  # Write CNV calls to file
-  file_name <- paste(strsplit(target_sample, "\\.")[[1]][1], '_cnv.txt', sep = "")
-  cnv_calls_file <- file.path(file_dir, file_name)
-  write.table(all.exons@CNV.calls, cnv_calls_file, 
-              quote=FALSE, sep='\t', row.names = FALSE)
-  # Write calculated dq-values to a file
-  file_name <- paste(strsplit(target_sample, "\\.")[[1]][1], '_dq.txt', sep = "")
+  # Calculate dq-values
   dq_file <- file.path(file_dir, file_name)
   dq_df <- all.exons@annotations
   dq_df$test <- all.exons@test
@@ -87,6 +81,19 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   dq_df$ratio_observed <- all.exons@test/ (all.exons@reference + all.exons@test)
   dq_df$ratio_expected <- all.exons@expected
   dq_df$dq <-  dq_df$ratio_observed/ all.exons@expected
+  # TODO: create separate file which contains the information (i.e. dq) on the specific bins in the cnv
+  #for (cnv in 1:nrow(all.exons@CNV.calls)){
+  #  select_bins <- which(dq_df$chromosome == cnv$chromosome & dq_df$end >= cnv$start & dq_df$end <= cnv$end)
+  #  dq_bin <- paste(round(dq_df[select_bins, "dq"], digits = 3), collapse = ",")
+    #mean_dq <- mean(dq_df[select_bins, "dq"]) # this seems to be the same as the reads.ratio in the file, no need to recalculate this?
+  #}
+  # Write CNV calls to file
+  file_name <- paste(strsplit(target_sample, "\\.")[[1]][1], '_cnv.txt', sep = "")
+  cnv_calls_file <- file.path(file_dir, file_name)
+  write.table(all.exons@CNV.calls, cnv_calls_file, 
+              quote=FALSE, sep='\t', row.names = FALSE)
+  # Write calculated dq-values to a file
+  file_name <- paste(strsplit(target_sample, "\\.")[[1]][1], '_dq.txt', sep = "")
   write.table(dq_df, dq_file, 
               quote=FALSE, sep='\t', row.names = FALSE)
   return(list(cnv_calls_file, dq_file))
