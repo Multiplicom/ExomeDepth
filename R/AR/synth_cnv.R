@@ -58,6 +58,7 @@ add_poisson_noise <- function(my_counts_file_in, my_counts_file_out, noise_file)
   # Add poisson noise to the counts matrix
   # Get the counts
   my.counts <- read.table(my_counts_file_in, header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE)
+  bin_size <- my.counts$end - my.counts$start
   # Get the noise data
   poisson_noise  <- read.table(noise_file, header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE)
   n_els = nrow(my.counts)
@@ -68,7 +69,10 @@ add_poisson_noise <- function(my_counts_file_in, my_counts_file_out, noise_file)
     if(!c(nsample) %in% names(my.counts)){
       stop("Given sample is not present in the counts file")
     }
-    my.counts[,nsample] <- my.counts[,nsample] + rpois(n_els, noise)
+    avg_coverage_base <- mean(my.counts[, nsample])/mean(bin_size)
+    #noise relative to the bin size
+    coverage_noise <- rpois(n_els, avg_coverage_base/noise*100)*bin_size/100 # x100 to be sure to have integer values
+    my.counts[,nsample] <- my.counts[,nsample] + coverage_noise # old: rpois(n_els, noise)
   }
   # write the new counts matrix
   write.table(as.data.frame(my.counts), my_counts_file_out, 

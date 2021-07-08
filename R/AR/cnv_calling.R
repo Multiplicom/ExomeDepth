@@ -74,7 +74,6 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
                         end = my_counts$end,
                         name = my_counts$names)
   # Calculate dq-values
-  dq_file <- file.path(file_dir, file_name)
   dq_df <- all.exons@annotations
   dq_df$test <- all.exons@test
   dq_df$reference <- all.exons@reference
@@ -94,6 +93,7 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
               quote=FALSE, sep='\t', row.names = FALSE)
   # Write calculated dq-values to a file
   file_name <- paste(strsplit(target_sample, "\\.")[[1]][1], '_dq.txt', sep = "")
+  dq_file <- file.path(file_dir, file_name)
   write.table(dq_df, dq_file, 
               quote=FALSE, sep='\t', row.names = FALSE)
   return(list(cnv_calls_file, dq_file))
