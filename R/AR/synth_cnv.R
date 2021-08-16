@@ -72,7 +72,7 @@ add_poisson_noise <- function(my_counts_file_in, my_counts_file_out, noise_file)
     avg_coverage_base <- mean(my.counts[, nsample])/mean(bin_size)
     #noise relative to the bin size
     coverage_noise <- rpois(n_els, avg_coverage_base/noise*100)*bin_size/100 # x100 to be sure to have integer values
-    my.counts[,nsample] <- my.counts[,nsample] + coverage_noise # old: rpois(n_els, noise)
+    my.counts[,nsample] <- my.counts[,nsample] + round(coverage_noise) # old: rpois(n_els, noise)
   }
   # write the new counts matrix
   write.table(as.data.frame(my.counts), my_counts_file_out, 
