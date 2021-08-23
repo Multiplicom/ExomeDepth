@@ -10,7 +10,7 @@ option_list = list(
               help="comma-separated list of reference samples", metavar="character"),
   make_option(c("-o", "--out"), type="character", default=NULL,
               help="directory containing the output files", metavar="character"),
-  make_option(c("-b", "--bias"), type="logical", default=TRUE,
+  make_option(c("-b", "--bias"), type="logical", default=FALSE,
               help="perform GC-bias correction [default= %default]", metavar="logical"),
   make_option(c("-p", "--prob"), type="double", default=1e-4,
               help="transition probability used for cnv calling [default= %default]", metavar="double")  
@@ -40,7 +40,7 @@ if (is.null(opt$out)){
 }
 
 # Function to select the reference samples for the target sample
-perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file_dir, bias_correction = TRUE, transition.probability = 10^-4){
+perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file_dir, bias_correction, transition.probability){
   my_counts <- read.table(my_counts_file, header = TRUE, sep = "\t", quote = "", stringsAsFactors = FALSE)
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
   ref_samples_list <- strsplit(ref_samples, split = ",")[[1]]
