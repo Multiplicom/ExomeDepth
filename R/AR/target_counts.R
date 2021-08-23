@@ -45,8 +45,8 @@ get_bed_frame <- function(bed_file, BIN_LENGTH_THRESHOLD = 50) {
   names(bed.frame)[1] <- "chromosome"
   names(bed.frame)[2] <- "start"
   names(bed.frame)[3] <- "end"
-  bin.length <- bed.frame$end - bed.frame$start # assumption that the bed-file is 0 based. Correct?
-  bed.frame <- bed.frame[which((bed.frame$end - bed.frame$start)>= BIN_LENGTH_THRESHOLD),] # TODO: keep track of bins that were excluded
+  #bin.length <- bed.frame$end - bed.frame$start # assumption that the bed-file is 0 based. Correct?
+  #bed.frame <- bed.frame[which((bed.frame$end - bed.frame$start)>= BIN_LENGTH_THRESHOLD),] # TODO: keep track of bins that were excluded
   return(bed.frame)
 }
 
