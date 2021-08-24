@@ -10,7 +10,7 @@ option_list = list(
               help="comma-separated list of reference samples", metavar="character"),
   make_option(c("-o", "--out"), type="character", default=NULL,
               help="directory containing the output files", metavar="character"),
-  make_option(c("-b", "--bias"), type="logical", default=FALSE,
+  make_option(c("-b", "--bias"), action="store_true", type="logical", default=FALSE,
               help="perform GC-bias correction [default= %default]", metavar="logical"),
   make_option(c("-p", "--prob"), type="double", default=1e-4,
               help="transition probability used for cnv calling [default= %default]", metavar="double")  
