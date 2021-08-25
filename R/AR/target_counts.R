@@ -39,14 +39,12 @@ if (is.null(opt$bed)){
 }
 
 # Create a dataframe from the Agilent Regions or Covered bed-file
-get_bed_frame <- function(bed_file, BIN_LENGTH_THRESHOLD = 50) {
+get_bed_frame <- function(bed_file) {
   bed.frame <- read.delim(file = bed_file, header = FALSE, 
                           stringsAsFactors = FALSE)
   names(bed.frame)[1] <- "chromosome"
   names(bed.frame)[2] <- "start"
   names(bed.frame)[3] <- "end"
-  #bin.length <- bed.frame$end - bed.frame$start # assumption that the bed-file is 0 based. Correct?
-  #bed.frame <- bed.frame[which((bed.frame$end - bed.frame$start)>= BIN_LENGTH_THRESHOLD),] # TODO: keep track of bins that were excluded
   return(bed.frame)
 }
 
