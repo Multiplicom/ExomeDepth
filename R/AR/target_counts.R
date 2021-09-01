@@ -69,6 +69,8 @@ get_coverage_files <- function(my_counts, file_dir){
     cat("Write counts of ", cov_col, " to output file \n", sep = "")
     cat("Output file: ", out_file, "\n", sep = "")
     cat("Number of lines in sample_df: ", nrow(sample_df), "\n", sep = "")
+    # add `#` as a first character to the column names - to comment the header (needed by the Bedtools intersect)
+    colnames(sample_df)[1] <- paste("#", colnames(sample_df)[1], sep="")
     write.table(sample_df, out_file, quote=FALSE, sep='\t', row.names = FALSE)
   }
   my_counts_file <- file.path(file_dir, 'my_counts.txt')

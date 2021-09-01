@@ -102,7 +102,13 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   # Write calculated dq-values to a file
   file_name <- paste(strsplit(target_sample, "\\.")[[1]][1], '_dq.txt', sep = "")
   dq_file <- file.path(file_dir, file_name)
-  write.table(dq_df, dq_file, 
+
+  # reorder columns so that chr, start and end are the first three columns (needed by the Bedtools intersect)
+  dq_df <- dq_df[c("chromosome", "start", "end", "name", "test", "reference", "reads.expected", "reads.observed", "dq")]
+  # add `#` as a first character to the column names - to comment the header (also needed by the Bedtools intersect)
+  colnames(dq_df)[1] <- paste("#", colnames(dq_df)[1], sep="")
+
+  write.table(dq_df, dq_file,
               quote=FALSE, sep='\t', row.names = FALSE)
   return(list(cnv_calls_file, dq_file))
 }
