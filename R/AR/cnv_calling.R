@@ -90,13 +90,13 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   file_name <- paste(strsplit(target_sample, "\\.")[[1]][1], '_cnv.txt', sep = "")
   cnv_calls_file <- file.path(file_dir, file_name)
 
-  # reorder columns so that chr, start and end are the first three columns (needed by the Bedtools intersect)
-  df_CNV_calls <- all.exons@CNV.calls
-  df_CNV_calls <-  df_CNV_calls[c("chromosome", "start", "end", "start.p", "end.p", "type", "nexons", "id", "BF",
-                                              "reads.expected", "reads.observed", "reads.ratio")]
-  # add `#` as a first character to the column names - to comment the header (also needed by the Bedtools intersect)
-  colnames(df_CNV_calls)[1] <- paste("#", colnames(df_CNV_calls)[1], sep="")
-
+  if(dim(df_CNV_calls)[1] != 0) { # check whether there are cnv calls
+    #reorder columns so that chr, start and end are the first three columns (needed by the Bedtools intersect)
+    df_CNV_calls <-  df_CNV_calls[c("chromosome", "start", "end", "start.p", "end.p", "type", "nexons", "id", "BF",
+                                    "reads.expected", "reads.observed", "reads.ratio")]
+    # add `#` as a first character to the column names - to comment the header (also needed by the Bedtools intersect)
+    colnames(df_CNV_calls)[1] <- paste("#", colnames(df_CNV_calls)[1], sep="")
+  }
   write.table(df_CNV_calls, cnv_calls_file,
               quote=FALSE, sep='\t', row.names = FALSE)
   # Write calculated dq-values to a file
