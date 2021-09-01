@@ -89,7 +89,7 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   # Write CNV calls to file
   file_name <- paste(strsplit(target_sample, "\\.")[[1]][1], '_cnv.txt', sep = "")
   cnv_calls_file <- file.path(file_dir, file_name)
-
+  df_CNV_calls <- all.exons@CNV.calls
   if(dim(df_CNV_calls)[1] != 0) { # check whether there are cnv calls
     #reorder columns so that chr, start and end are the first three columns (needed by the Bedtools intersect)
     df_CNV_calls <-  df_CNV_calls[c("chromosome", "start", "end", "start.p", "end.p", "type", "nexons", "id", "BF",
