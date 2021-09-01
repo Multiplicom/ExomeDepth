@@ -62,6 +62,8 @@ get_target_counts <- function(bam_dir, reference_fasta, bed_file, min_mapq=20){
 get_coverage_files <- function(my_counts, file_dir){
   fixed_columns <- c('chromosome', 'start', 'end', 'GC', 'names')
   coverage_columns <- get_coverage_columns(fixed_columns, my_counts)
+  # add `#` as a first character to the column names - to comment the header (needed by the Bedtools intersect)
+  coverage_columns[1] <- paste("#", coverage_columns[1], sep="")
   for (cov_col in coverage_columns){
     sample_df <- my_counts[,c(fixed_columns, cov_col)]
     file_name <- paste(strsplit(cov_col, "\\.")[[1]][1], '_cov.txt', sep = "") #removes .bam extension, but probably no longer needed as is been taken care of above
