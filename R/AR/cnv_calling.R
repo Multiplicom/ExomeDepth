@@ -104,7 +104,7 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   dq_file <- file.path(file_dir, file_name)
 
   # reorder columns so that chr, start and end are the first three columns (needed by the Bedtools intersect)
-  dq_df <- dq_df[c("chromosome", "start", "end", "name", "test", "reference", "reads.expected", "reads.observed", "dq")]
+  dq_df <- dq_df[c("chromosome", "start", "end", "name", "test", "reference", "ratio_expected", "ratio_observed", "dq")]
   # add `#` as a first character to the column names - to comment the header (also needed by the Bedtools intersect)
   colnames(dq_df)[1] <- paste("#", colnames(dq_df)[1], sep="")
 
