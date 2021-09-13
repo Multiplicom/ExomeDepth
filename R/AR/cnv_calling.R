@@ -80,6 +80,7 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   dq_df$ratio_observed <- all.exons@test/ (all.exons@reference + all.exons@test)
   dq_df$ratio_expected <- all.exons@expected
   dq_df$dq <-  dq_df$ratio_observed/ all.exons@expected
+  dq_df$log2 <- log2(dq_df$dq + 1e-16)
   # TODO: create separate file which contains the information (i.e. dq) on the specific bins in the cnv
   #for (cnv in 1:nrow(all.exons@CNV.calls)){
   #  select_bins <- which(dq_df$chromosome == cnv$chromosome & dq_df$end >= cnv$start & dq_df$end <= cnv$end)
@@ -104,7 +105,7 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   dq_file <- file.path(file_dir, file_name)
 
   # reorder columns so that chr, start and end are the first three columns (needed by the Bedtools intersect)
-  dq_df <- dq_df[c("chromosome", "start", "end", "name", "test", "reference", "ratio_expected", "ratio_observed", "dq")]
+  dq_df <- dq_df[c("chromosome", "start", "end", "name", "test", "reference", "ratio_expected", "ratio_observed", "dq", "log2")]
   # add `#` as a first character to the column names - to comment the header (also needed by the Bedtools intersect)
   colnames(dq_df)[1] <- paste("#", colnames(dq_df)[1], sep="")
 
