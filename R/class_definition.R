@@ -290,7 +290,7 @@ setMethod("CallCNVs", "ExomeDepth", function( x, chromosome, start, end, name, t
     my.calls <- viterbi.hmm (transitions, loglikelihood = loc.likelihood,
                              positions = as.integer(c(positions[1] - 2*expected.CNV.length, positions,end.positions[length(end.positions)]+2*expected.CNV.length)),   #include position of new dummy exon
                              expected.CNV.length = expected.CNV.length)
-
+    my.calls$calls$start.p <- my.calls$calls$end.p - my.calls$calls$nexons + 1 ##added to solve github issue #4. ED messes up the calculation of the CNV start in case of consecutive CNVs. This fix should solve this. 
     my.calls$calls$start.p <- my.calls$calls$start.p -1  ##remove the dummy exon, which has now served its purpose
     my.calls$calls$end.p <- my.calls$calls$end.p -1  ##remove the dummy exon, which has now served its purpose
     #loc.likelihood <- loc.likelihood[ -1, c(2,1, 3) ]  ##remove the dummy exon, which has now served its purpose
@@ -298,7 +298,6 @@ setMethod("CallCNVs", "ExomeDepth", function( x, chromosome, start, end, name, t
 
   ################################ Now make it look better, add relevant info
     if (nrow(my.calls$calls) > 0) {
-
       my.calls$calls$start <- loc.annotations$start[ my.calls$calls$start.p ]
       my.calls$calls$end <- loc.annotations$end[ my.calls$calls$end.p ]
       my.calls$calls$chromosome <- as.character(loc.annotations$chromosome[ my.calls$calls$start.p ])
