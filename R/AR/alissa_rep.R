@@ -90,7 +90,8 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   dq_df$reference <- all.exons@reference
   dq_df$ratio_observed <- all.exons@test/ (all.exons@reference + all.exons@test)
   dq_df$ratio_expected <- all.exons@expected
-  dq_df$dq <-  dq_df$ratio_observed/ all.exons@expected
+  pc <- 1e-16 #pseudocount to avoid zero division
+  dq_df$dq <- (dq_df$ratio_observed + pc) / (all.exons@expected + pc) 
   write.table(dq_df, dq_file, 
               quote=FALSE, sep='\t', row.names = FALSE)
   return(list(cnv_calls_file, dq_file))
