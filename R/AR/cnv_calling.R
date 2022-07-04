@@ -77,10 +77,10 @@ perform_cnv_calling <- function(my_counts_file, target_sample, ref_samples, file
   dq_df <- all.exons@annotations
   dq_df$test <- all.exons@test
   dq_df$reference <- all.exons@reference
-  dq_df$ratio_observed <- all.exons@test/ (all.exons@reference + all.exons@test)
-  dq_df$ratio_expected <- all.exons@expected
   pc <- 1e-16 #add pseudocount below to avoid zero-division 
-  dq_df$dq <-  (dq_df$ratio_observed + pc)/ (all.exons@expected+pc)
+  dq_df$ratio_observed <- (all.exons@test + pc)/ (all.exons@reference + all.exons@test + pc)
+  dq_df$ratio_expected <- all.exons@expected
+  dq_df$dq <-  (dq_df$ratio_observed)/ (all.exons@expected+pc)
   dq_df$log2 <- log2(dq_df$dq)
   # TODO: create separate file which contains the information (i.e. dq) on the specific bins in the cnv
   #for (cnv in 1:nrow(all.exons@CNV.calls)){
